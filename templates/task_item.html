@@ -1,0 +1,50 @@
+<li class="task {% if task.done %}done{% endif %}">
+    <div class="task-info">
+        <form action="/toggle/{{ task.id }}" method="post">
+            <input type="checkbox"
+                   onchange="this.form.submit()"
+                   {% if task.done %}checked{% endif %}>
+        </form>
+
+        <div class="task-text">
+            <span class="title">
+                {{ task.text_name }}
+
+                {% if task.is_daily and task.streak > 0 %}
+                <small class="counter">
+                    🔥{{ task.streak }}
+                </small>
+                {% endif %}
+            </span>
+
+            {% if task.text_description %}
+                <span class="description">{{ task.text_description }}</span>
+            {% endif %}
+
+            {% if task.planned_date %}
+                <small class="planned-date">
+                    {{ task.planned_date }}
+                </small>
+            {% endif %}
+        </div>
+    </div>
+
+    <form action="/delete/{{ task.id }}" method="post">
+        <button class="delete-btn" type="submit">✕</button>
+    </form>
+
+    <form action="/toggle-daily/{{ task.id }}" method="post">
+        <button
+            class="daily-btn {% if task.is_daily %}active{% endif %}"
+            type="submit"
+            title="Сделать ежедневной">☀</button>
+    </form>
+    {% if not task.done
+    and not task.is_daily
+    and (task.planned_date == today or task.planned_date == None)
+    %}
+    <form action="/focus/{{ task.id }}" method="post">
+        <button class="focus-btn" title="Фокус дня">🎯</button>
+    </form>
+    {% endif %}
+</li>
