@@ -1,11 +1,9 @@
 import json
 import os
-from datetime import date
 from storage import load_tasks, save_tasks
-from utils.dates import today_iso
+from app.utils.dates import today_iso
+from app.paths import META_FILE, DATA_DIR
 
-
-META_FILE =  "data/meta.json"
 
 def get_last_reset_date():
     if not os.path.exists(META_FILE):
@@ -17,7 +15,7 @@ def get_last_reset_date():
     return data.get("last_reset")
 
 def set_last_reset_date(value: str):
-    os.makedirs("data", exist_ok=True)
+    DATA_DIR.mkdir(exist_ok=True)
 
     with open(META_FILE, "w", encoding="utf-8") as f:
         json.dump({"last_reset": value}, f)

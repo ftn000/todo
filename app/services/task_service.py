@@ -1,13 +1,12 @@
 import uuid
 from typing import List
 
-from daily import get_last_reset_date, set_last_reset_date
-from models import Task
+from app.domain.models.task import Task
 from storage import load_tasks, save_tasks
 from datetime import date, timedelta
 
-from utils.dates import today_iso
-from focus import get_focus_task_id, clear_focus
+from app.utils.dates import today_iso
+from app.services.focus_service import get_focus_task_id, clear_focus
 
 
 def get_all_tasks() -> List[Task]:

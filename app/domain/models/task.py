@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from typing import Optional
-from datetime import date
 
 @dataclass
 class Task:
@@ -16,5 +15,5 @@ class Task:
     streak: int = 0
 
     #Даты
-    planned_date: Optional[str] = None          #ISO: 2026-01-13
-    last_completed_date: Optional[str] = None   #ISO
+    planned_date: Optional[str] = None
+    last_completed_date: Optional[str] = None

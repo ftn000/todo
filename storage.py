@@ -1,11 +1,7 @@
 import json
-import os
 from typing import List
-from models import Task
-
-DATA_DIR = "data"
-DATA_FILE = os.path.join(DATA_DIR, "tasks.json")
-
+from app.domain.models.task import Task
+from app.paths import DATA_DIR, TASKS_FILE
 
 DEFAULTS = {
     "done": False,
@@ -24,10 +20,10 @@ def migrate_task(raw: dict) -> dict:
 
 
 def load_tasks() -> List[Task]:
-    if not os.path.exists(DATA_DIR):
+    if not DATA_DIR.exists(DATA_DIR):
         return []
 
-    with open(DATA_FILE, "r", encoding="utf-8") as f:
+    with open(TASKS_FILE, "r", encoding="utf-8") as f:
         raw_tasks = json.load(f)
 
     migrated = []
@@ -44,9 +40,9 @@ def load_tasks() -> List[Task]:
     return migrated
 
 def save_tasks(tasks: List[Task]) -> None:
-    os.makedirs(DATA_DIR, exist_ok=True)
+    DATA_DIR.mkdir(exist_ok=True)
 
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
+    with open(TASKS_FILE, "w", encoding="utf-8") as f:
         json.dump(
             [task.__dict__ for task in tasks],
             f,
