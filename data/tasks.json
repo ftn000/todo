@@ -5,9 +5,20 @@
     "text_description": "Отжимания + Пресс\r\nКаждый день + 1",
     "done": false,
     "is_daily": true,
-    "completed_count": 37,
-    "streak": 1,
+    "completed_count": 38,
+    "streak": 2,
     "planned_date": null,
-    "last_completed_date": "2026-02-10"
+    "last_completed_date": "2026-02-11"
+  },
+  {
+    "id": "c07c18c4-e64b-4541-987e-f8b62c7d7ee5",
+    "text_name": "fsf",
+    "text_description": "",
+    "done": false,
+    "is_daily": false,
+    "completed_count": 6,
+    "streak": 0,
+    "planned_date": null,
+    "last_completed_date": null
   }
 ]

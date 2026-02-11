@@ -4,6 +4,8 @@ import os
 from app.utils.dates import today_iso
 from app.paths import META_FILE, DATA_DIR
 
+print("FOCUS SERVICE LOADED", __name__)
+
 def get_meta():
     if not os.path.exists(META_FILE):
         return {}
@@ -40,6 +42,8 @@ def set_focus(task_id: str):
 
 def clear_focus():
     meta = get_meta()
+    print(f"Before clear: {meta}")
     meta["focus_task_id"] = None
     meta["focus_date"] = None
     save_meta(meta)
+    print(f"After clear: {meta}")

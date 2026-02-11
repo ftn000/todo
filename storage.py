@@ -20,7 +20,7 @@ def migrate_task(raw: dict) -> dict:
 
 
 def load_tasks() -> List[Task]:
-    if not DATA_DIR.exists(DATA_DIR):
+    if not DATA_DIR.exists():
         return []
 
     with open(TASKS_FILE, "r", encoding="utf-8") as f:

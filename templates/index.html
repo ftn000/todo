@@ -50,17 +50,15 @@
                 <span class="description">{{ focus_task.text_description }}</span>
             {% endif %}
 
-            <form method="post">
-                <button
-                        formaction="/toggle/{{ focus_task.id }}"
-                        class="focus-done-btn"
-                        type="submit">
+            <form method="post" action="/toggle/{{ focus_task.id }}">
+                <button class="focus-done-btn" type="submit">
                     ✓ Выполнить
                 </button>
-                <button
-                        formaction="/focus/clear"
-                        type="submit">
-                        Снять фокус
+            </form>
+
+            <form method="post" action="/focus/clear">
+                <button type="submit">
+                    Снять фокус
                 </button>
             </form>
         </div>

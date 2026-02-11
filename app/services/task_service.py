@@ -1,19 +1,16 @@
 import uuid
-from typing import List
+from datetime import date
+from typing import List, Optional
 
-from app.domain.models.task import Task
 from storage import load_tasks, save_tasks
-from datetime import date, timedelta
-
-from app.utils.dates import today_iso
+from app.domain.models.task import Task
 from app.services.focus_service import get_focus_task_id, clear_focus
+from app.utils.dates import today_iso
 
 
 def get_all_tasks() -> List[Task]:
     tasks = load_tasks()
-
-    tasks.sort(key=lambda task: task.done)
-
+    tasks.sort(key = lambda t:t.done)
     return tasks
 
 def get_grouped_tasks():
@@ -58,21 +55,33 @@ def get_grouped_tasks():
         "done": done
     }
 
+def get_focus_task() -> Optional[Task]:
+    tasks = load_tasks()
+    focus_id = get_focus_task_id()
+    if not focus_id:
+        return None
+
+    for task in tasks:
+        if task.id == focus_id:
+            return task
+
+    return None
+
+
 def add_task(
         text_name: str,
         text_description: str,
         is_daily: bool,
-        planned_date: str
+        planned_date: Optional[str]
 ) -> None:
     tasks = load_tasks()
 
     task = Task(
-        id = str(uuid.uuid4()),
+        id=str(uuid.uuid4()),
         text_name=text_name,
         text_description=text_description,
         is_daily=is_daily,
-        planned_date=planned_date,
-        done=False
+        planned_date=planned_date if not is_daily else None
     )
 
     tasks.append(task)
@@ -85,54 +94,30 @@ def toggle_task(task_id: str):
 
     for task in tasks:
         if task.id == task_id:
-            was_done = task.done
-            task.done = not task.done
 
-            if task.is_daily and not was_done and task.done:
-                last = (
-                    date.fromisoformat(task.last_completed_date)
-                    if task.last_completed_date
-                    else None
-                )
+            if task.done:
+                task.mark_undone()
+            else:
+                task.mark_done(today)
 
-                if last == today:
-                    pass
-                elif last == today - timedelta(days=1):
-                    task.streak += 1
-                else:
-                    task.streak = 1
-
-                task.last_completed_date = today.isoformat()
-
-            if task.id == focus_id and task.done:
+            if task.id == focus_id:
                 clear_focus()
 
             break
 
     save_tasks(tasks)
 
-
-def toggle_daily(task_id:str):
+def toggle_daily(task_id: str) -> None:
     tasks = load_tasks()
 
     for task in tasks:
         if task.id == task_id:
-            task.is_daily = not task.is_daily
+            task.toggle_daily()
             break
 
     save_tasks(tasks)
 
-def delete_task(task_id: str):
+def delete_task(task_id: str) -> None:
     tasks = load_tasks()
     tasks = [task for task in tasks if task.id != task_id]
     save_tasks(tasks)
-
-def get_focus_task():
-    focus_id = get_focus_task_id()
-    if not focus_id:
-        return None
-
-    for task in load_tasks():
-        if task.id == focus_id:
-            return task
-    return None
