@@ -2,13 +2,13 @@ import uuid
 from datetime import date
 from typing import List, Optional
 
-from app.infrastructure.repositories.json_task_repository import JsonTaskRepository
+from app.infrastructure.repositories.sqlalchemy_task_repository import SqlAlchemyTaskRepository
 from app.domain.models.task import Task
 from app.services.focus_service import get_focus_task_id, clear_focus
 from app.utils.dates import today_iso
 
 
-repos = JsonTaskRepository()
+repos = SqlAlchemyTaskRepository()
 
 
 def get_all_tasks() -> List[Task]:

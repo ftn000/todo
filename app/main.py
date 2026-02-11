@@ -8,6 +8,8 @@ from app.api.routes import tasks, focus
 from app.services.daily_service import reset_daily_tasks
 from app.services.task_service import get_grouped_tasks, get_focus_task
 from app.utils.dates import today_iso
+from app.infrastructure.db.base import Base
+from app.infrastructure.db.session import engine
 
 app = FastAPI()
 
@@ -20,6 +22,7 @@ app.include_router(focus.router)
 
 @app.on_event("startup")
 def startup():
+    Base.metadata.create_all(bind=engine)
     reset_daily_tasks()
 
 @app.get("/", response_class=HTMLResponse)

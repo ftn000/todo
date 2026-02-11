@@ -1,11 +1,11 @@
 import json
 import os
-from app.infrastructure.repositories.json_task_repository import JsonTaskRepository
+from app.infrastructure.repositories.sqlalchemy_task_repository import SqlAlchemyTaskRepository
 from app.utils.dates import today_iso
 from app.paths import META_FILE, DATA_DIR
 
 
-repos = JsonTaskRepository()
+repos = SqlAlchemyTaskRepository()
 
 
 def get_last_reset_date():

@@ -3,11 +3,9 @@ from fastapi.responses import RedirectResponse
 from app.services.focus_service import set_focus, clear_focus
 
 router = APIRouter()
-print("FOCUS ROUTER LOADED")
 
 @router.post("/focus/clear")
 def clear_focus_route():
-    print("ROUTE CALLED")
     clear_focus()
     return RedirectResponse(url="/", status_code=303)
 
