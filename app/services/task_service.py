@@ -2,19 +2,22 @@ import uuid
 from datetime import date
 from typing import List, Optional
 
-from storage import load_tasks, save_tasks
+from app.infrastructure.repositories.json_task_repository import JsonTaskRepository
 from app.domain.models.task import Task
 from app.services.focus_service import get_focus_task_id, clear_focus
 from app.utils.dates import today_iso
 
 
+repos = JsonTaskRepository()
+
+
 def get_all_tasks() -> List[Task]:
-    tasks = load_tasks()
+    tasks = repos.get_all()
     tasks.sort(key = lambda t:t.done)
     return tasks
 
 def get_grouped_tasks():
-    tasks = load_tasks()
+    tasks = repos.get_all()
     focus_id = get_focus_task_id()
     today = today_iso()
 
@@ -56,7 +59,7 @@ def get_grouped_tasks():
     }
 
 def get_focus_task() -> Optional[Task]:
-    tasks = load_tasks()
+    tasks = repos.get_all()
     focus_id = get_focus_task_id()
     if not focus_id:
         return None
@@ -74,7 +77,7 @@ def add_task(
         is_daily: bool,
         planned_date: Optional[str]
 ) -> None:
-    tasks = load_tasks()
+
 
     task = Task(
         id=str(uuid.uuid4()),
@@ -84,40 +87,33 @@ def add_task(
         planned_date=planned_date if not is_daily else None
     )
 
-    tasks.append(task)
-    save_tasks(tasks)
+    repos.add(task)
 
 def toggle_task(task_id: str):
-    tasks = load_tasks()
+    task = repos.get_by_id(task_id)
     today = date.today()
     focus_id = get_focus_task_id()
 
-    for task in tasks:
-        if task.id == task_id:
+    if not task:
+        return
 
-            if task.done:
-                task.mark_undone()
-            else:
-                task.mark_done(today)
+    if task.done:
+        task.mark_undone()
+    else:
+        task.mark_done(today)
 
-            if task.id == focus_id:
-                clear_focus()
+    if task.id == focus_id:
+        clear_focus()
 
-            break
-
-    save_tasks(tasks)
+    repos.update(task)
 
 def toggle_daily(task_id: str) -> None:
-    tasks = load_tasks()
+    task = repos.get_by_id(task_id)
+    if not task:
+        return
 
-    for task in tasks:
-        if task.id == task_id:
-            task.toggle_daily()
-            break
-
-    save_tasks(tasks)
+    task.toggle_daily()
+    repos.update(task)
 
 def delete_task(task_id: str) -> None:
-    tasks = load_tasks()
-    tasks = [task for task in tasks if task.id != task_id]
-    save_tasks(tasks)
+    repos.delete(task_id)

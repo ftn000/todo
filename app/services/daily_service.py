@@ -1,8 +1,11 @@
 import json
 import os
-from storage import load_tasks, save_tasks
+from app.infrastructure.repositories.json_task_repository import JsonTaskRepository
 from app.utils.dates import today_iso
 from app.paths import META_FILE, DATA_DIR
+
+
+repos = JsonTaskRepository()
 
 
 def get_last_reset_date():
@@ -28,11 +31,11 @@ def reset_daily_tasks():
     if last_reset == today:
         return
 
-    tasks = load_tasks()
+    tasks = repos.get_all()
 
     for task in tasks:
         if task.is_daily:
             task.done = False
+            repos.update(task)
 
-    save_tasks(tasks)
     set_last_reset_date(today)
