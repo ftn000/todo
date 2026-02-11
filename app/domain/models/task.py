@@ -32,6 +32,8 @@ class Task:
 
     def toggle_daily(self) -> None:
         self.is_daily = not self.is_daily
+        if self.is_daily:
+            self.planned_date = None
 
     def reset_daily(self) -> None:
         if self.is_daily:

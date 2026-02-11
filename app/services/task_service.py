@@ -2,21 +2,19 @@ import uuid
 from datetime import date
 from typing import List, Optional
 
-from app.infrastructure.repositories.sqlalchemy_task_repository import SqlAlchemyTaskRepository
+from app.domain.repositories.task_repository import TaskRepository
 from app.domain.models.task import Task
 from app.services.focus_service import get_focus_task_id, clear_focus
 from app.utils.dates import today_iso
 
 
-repos = SqlAlchemyTaskRepository()
 
-
-def get_all_tasks() -> List[Task]:
+def get_all_tasks(repos: TaskRepository) -> List[Task]:
     tasks = repos.get_all()
     tasks.sort(key = lambda t:t.done)
     return tasks
 
-def get_grouped_tasks():
+def get_grouped_tasks(repos: TaskRepository):
     tasks = repos.get_all()
     focus_id = get_focus_task_id()
     today = today_iso()
@@ -58,7 +56,7 @@ def get_grouped_tasks():
         "done": done
     }
 
-def get_focus_task() -> Optional[Task]:
+def get_focus_task(repos: TaskRepository) -> Optional[Task]:
     tasks = repos.get_all()
     focus_id = get_focus_task_id()
     if not focus_id:
@@ -75,7 +73,8 @@ def add_task(
         text_name: str,
         text_description: str,
         is_daily: bool,
-        planned_date: Optional[str]
+        planned_date: Optional[str],
+        repos: TaskRepository
 ) -> None:
 
 
@@ -89,7 +88,7 @@ def add_task(
 
     repos.add(task)
 
-def toggle_task(task_id: str):
+def toggle_task(task_id: str, repos: TaskRepository):
     task = repos.get_by_id(task_id)
     today = date.today()
     focus_id = get_focus_task_id()
@@ -107,7 +106,7 @@ def toggle_task(task_id: str):
 
     repos.update(task)
 
-def toggle_daily(task_id: str) -> None:
+def toggle_daily(task_id: str, repos: TaskRepository) -> None:
     task = repos.get_by_id(task_id)
     if not task:
         return
@@ -115,5 +114,5 @@ def toggle_daily(task_id: str) -> None:
     task.toggle_daily()
     repos.update(task)
 
-def delete_task(task_id: str) -> None:
+def delete_task(task_id: str, repos: TaskRepository) -> None:
     repos.delete(task_id)

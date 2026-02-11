@@ -1,10 +1,13 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
 from app.api.routes import tasks, focus
+from app.api.dependencies import get_task_repository
+from app.domain.repositories.task_repository import TaskRepository
+from app.infrastructure.repositories.sqlalchemy_task_repository import SqlAlchemyTaskRepository
 from app.services.daily_service import reset_daily_tasks
 from app.services.task_service import get_grouped_tasks, get_focus_task
 from app.utils.dates import today_iso
@@ -23,12 +26,13 @@ app.include_router(focus.router)
 @app.on_event("startup")
 def startup():
     Base.metadata.create_all(bind=engine)
-    reset_daily_tasks()
+    repos = SqlAlchemyTaskRepository()
+    reset_daily_tasks(repos)
 
 @app.get("/", response_class=HTMLResponse)
-def index(request: Request):
-    groups = get_grouped_tasks()
-    focus_task = get_focus_task()
+def index(request: Request, repos: TaskRepository = Depends(get_task_repository)):
+    groups = get_grouped_tasks(repos)
+    focus_task = get_focus_task(repos)
 
     return templates.TemplateResponse(
         "index.html",
