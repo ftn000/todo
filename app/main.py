@@ -5,10 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
 from app.api.routes import tasks, focus
-from app.api.dependencies import get_task_repository, get_daily_service
-from app.domain.repositories.task_repository import TaskRepository
-from app.infrastructure.repositories.json_meta_repository import JsonMetaRepository
-from app.infrastructure.repositories.sqlalchemy_task_repository import SqlAlchemyTaskRepository
+from app.api.dependencies import get_daily_service
 from app.services.task_service import TaskService
 from app.api.dependencies import get_task_service
 from app.utils.dates import today_iso
