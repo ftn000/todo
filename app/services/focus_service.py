@@ -1,48 +1,52 @@
-import json
-import os
-
+from app.domain.exceptions import TaskNotFoundError, CannotFocusCompletedTaskError, FocusAlreadySetError
+from app.domain.repositories.task_repository import TaskRepository
+from app.domain.repositories.meta_repository import MetaRepository
 from app.utils.dates import today_iso
-from app.paths import META_FILE, DATA_DIR
 
 
-def get_meta():
-    if not os.path.exists(META_FILE):
-        return {}
-    with open(META_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+class FocusService:
 
-def save_meta(meta: dict):
-    DATA_DIR.mkdir(exist_ok=True)
-
-    with open(META_FILE, "w", encoding="utf-8") as f:
-        json.dump(meta, f, ensure_ascii=False, indent=2)
-
-def get_focus_task_id():
-    meta = get_meta()
-    today = today_iso()
-
-    if meta.get("focus_date") != today:
-        return None
-
-    return meta.get("focus_task_id")
-
-def set_focus(task_id: str):
-    meta = get_meta()
-    today = today_iso()
-
-    if meta.get("focus_task_id"):
-        return
-
-    meta["focus_task_id"] = task_id
-    meta["focus_date"] = today
-
-    save_meta(meta)
+    def __init__(
+            self,
+            task_repository: TaskRepository,
+            meta_repository: MetaRepository
+    ):
+        self._task_repository = task_repository
+        self._meta_repository = meta_repository
 
 
-def clear_focus():
-    meta = get_meta()
+    def set_focus(self, task_id: str) -> None:
+        today = today_iso()
 
-    meta["focus_task_id"] = None
-    meta["focus_date"] = None
+        task = self._task_repository.get_by_id(task_id)
+        if not task:
+            raise TaskNotFoundError("Task not found")
 
-    save_meta(meta)
+        if task.done:
+            raise CannotFocusCompletedTaskError("Cannot set focus on completed task")
+
+        existing_focus = self._meta_repository.get("focus_task_id")
+        focus_date = self._meta_repository.get("focus_date")
+
+        if existing_focus and focus_date == today:
+            raise FocusAlreadySetError("Focus already set for today")
+
+        self._meta_repository.set("focus_task_id", task_id)
+        self._meta_repository.set("focus_date", today)
+
+    def clear_focus(self) -> None:
+        self._meta_repository.set("focus_task_id", None)
+        self._meta_repository.set("focus_date", None)
+
+    def get_focus(self) -> str | None:
+        today = today_iso()
+        focus_id = self._meta_repository.get("focus_task_id")
+        focus_date = self._meta_repository.get("focus_date")
+
+        if not focus_id:
+            return None
+
+        if focus_date != today:
+            return None
+
+        return focus_id

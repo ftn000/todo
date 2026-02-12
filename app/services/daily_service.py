@@ -1,38 +1,30 @@
-import json
-import os
+from datetime import date
 from app.domain.repositories.task_repository import TaskRepository
-from app.utils.dates import today_iso
-from app.paths import META_FILE, DATA_DIR
+from app.domain.repositories.meta_repository import MetaRepository
 
+class DailyService:
 
-def get_last_reset_date():
-    if not os.path.exists(META_FILE):
-        return None
+    def __init__(
+            self,
+            task_repository: TaskRepository,
+            meta_repository: MetaRepository
+    ):
 
-    with open(META_FILE, "r", encoding="utf-8") as f:
-        data = json.load(f)
+        self._task_repository = task_repository
+        self._meta_repository = meta_repository
 
-    return data.get("last_reset")
+    def reset_if_needed(self) -> None:
+        today = date.today().isoformat()
+        last_reset = self._meta_repository.get("last_reset")
 
-def set_last_reset_date(value: str):
-    DATA_DIR.mkdir(exist_ok=True)
+        if last_reset == today:
+            return
 
-    with open(META_FILE, "w", encoding="utf-8") as f:
-        json.dump({"last_reset": value}, f)
+        tasks = self._task_repository.get_all()
 
+        for task in tasks:
+            if task.is_daily:
+                task.reset_daily()
+                self._task_repository.update(task)
 
-def reset_daily_tasks(repos: TaskRepository):
-    today = today_iso()
-    last_reset = get_last_reset_date()
-
-    if last_reset == today:
-        return
-
-    tasks = repos.get_all()
-
-    for task in tasks:
-        if task.is_daily:
-            task.done = False
-            repos.update(task)
-
-    set_last_reset_date(today)
+        self._meta_repository.set("last_reset", today)

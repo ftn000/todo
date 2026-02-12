@@ -5,14 +5,16 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
 from app.api.routes import tasks, focus
-from app.api.dependencies import get_task_repository
+from app.api.dependencies import get_task_repository, get_daily_service
 from app.domain.repositories.task_repository import TaskRepository
+from app.infrastructure.repositories.json_meta_repository import JsonMetaRepository
 from app.infrastructure.repositories.sqlalchemy_task_repository import SqlAlchemyTaskRepository
-from app.services.daily_service import reset_daily_tasks
-from app.services.task_service import get_grouped_tasks, get_focus_task
+from app.services.task_service import TaskService
+from app.api.dependencies import get_task_service
 from app.utils.dates import today_iso
 from app.infrastructure.db.base import Base
 from app.infrastructure.db.session import engine
+
 
 app = FastAPI()
 
@@ -26,13 +28,13 @@ app.include_router(focus.router)
 @app.on_event("startup")
 def startup():
     Base.metadata.create_all(bind=engine)
-    repos = SqlAlchemyTaskRepository()
-    reset_daily_tasks(repos)
+    get_daily_service().reset_if_needed()
+
 
 @app.get("/", response_class=HTMLResponse)
-def index(request: Request, repos: TaskRepository = Depends(get_task_repository)):
-    groups = get_grouped_tasks(repos)
-    focus_task = get_focus_task(repos)
+def index(request: Request, service: TaskService = Depends(get_task_service)):
+    groups = service.get_grouped_tasks()
+    focus_task = service.get_focus_task()
 
     return templates.TemplateResponse(
         "index.html",

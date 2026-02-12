@@ -2,117 +2,114 @@ import uuid
 from datetime import date
 from typing import List, Optional
 
+from app.domain.exceptions import TaskNotFoundError
 from app.domain.repositories.task_repository import TaskRepository
 from app.domain.models.task import Task
-from app.services.focus_service import get_focus_task_id, clear_focus
-from app.utils.dates import today_iso
+from app.services.focus_service import FocusService
+from app.utils.dates import today_iso, today
 
 
+class TaskService:
+    def __init__(
+            self,
+            task_repository: TaskRepository,
+            focus_repository: FocusService
+    ):
+        self._task_repository = task_repository
+        self._focus_service = focus_repository
 
-def get_all_tasks(repos: TaskRepository) -> List[Task]:
-    tasks = repos.get_all()
-    tasks.sort(key = lambda t:t.done)
-    return tasks
+    def get_all_tasks(self) -> List[Task]:
+        tasks = self._task_repository.get_all()
+        tasks.sort(key=lambda t: t.done)
+        return tasks
 
-def get_grouped_tasks(repos: TaskRepository):
-    tasks = repos.get_all()
-    focus_id = get_focus_task_id()
-    today = today_iso()
+    def get_grouped_tasks(self):
+        tasks = self._task_repository.get_all()
+        focus_id = self._focus_service.get_focus()
+        str_today = today_iso()
 
-    daily = []
-    active = []
-    future = []
-    overdue = []
-    done = []
+        daily = []
+        active = []
+        future = []
+        overdue = []
+        done = []
 
-    for task in tasks:
-        if task.id == focus_id:
-            continue
+        for task in tasks:
+            if task.id == focus_id:
+                continue
 
-        if task.is_daily:
-            daily.append(task)
-            continue
+            if task.is_daily:
+                daily.append(task)
+                continue
 
-        if task.done:
-            done.append(task)
-            continue
+            if task.done:
+                done.append(task)
+                continue
 
-        if task.planned_date is None:
-            active.append(task)
-            continue
+            if task.planned_date is None:
+                active.append(task)
+                continue
 
-        if task.planned_date > today:
-            future.append(task)
-        elif task.planned_date == today:
-            active.append(task)
-        else:
-            overdue.append(task)
+            if task.planned_date > str_today:
+                future.append(task)
+            elif task.planned_date == str_today:
+                active.append(task)
+            else:
+                overdue.append(task)
 
-    return {
-        "daily": daily,
-        "active": active,
-        "future": future,
-        "overdue": overdue,
-        "done": done
-    }
+        return {
+            "daily": daily,
+            "active": active,
+            "future": future,
+            "overdue": overdue,
+            "done": done
+        }
 
-def get_focus_task(repos: TaskRepository) -> Optional[Task]:
-    tasks = repos.get_all()
-    focus_id = get_focus_task_id()
-    if not focus_id:
-        return None
+    def get_focus_task(self) -> Optional[Task]:
+        focus_id = self._focus_service.get_focus()
+        if not focus_id:
+            return None
 
-    for task in tasks:
-        if task.id == focus_id:
-            return task
+        return self._task_repository.get_by_id(focus_id)
 
-    return None
+    def add_task(
+            self,
+            text_name: str,
+            text_description: str,
+            is_daily: bool,
+            planned_date: Optional[str]
+    ) -> None:
 
+        task = Task(
+            id=str(uuid.uuid4()),
+            text_name=text_name,
+            text_description=text_description,
+            is_daily=is_daily,
+            planned_date=planned_date if not is_daily else None
+        )
 
-def add_task(
-        text_name: str,
-        text_description: str,
-        is_daily: bool,
-        planned_date: Optional[str],
-        repos: TaskRepository
-) -> None:
+        self._task_repository.add(task)
 
+    def toggle_task(self, task_id: str):
+        task = self._task_repository.get_by_id(task_id)
 
-    task = Task(
-        id=str(uuid.uuid4()),
-        text_name=text_name,
-        text_description=text_description,
-        is_daily=is_daily,
-        planned_date=planned_date if not is_daily else None
-    )
+        if not task:
+            raise TaskNotFoundError("Task not found")
 
-    repos.add(task)
+        task.toggle_done(today())
 
-def toggle_task(task_id: str, repos: TaskRepository):
-    task = repos.get_by_id(task_id)
-    today = date.today()
-    focus_id = get_focus_task_id()
+        if task.id == self._focus_service.get_focus():
+            self._focus_service.clear_focus()
 
-    if not task:
-        return
+        self._task_repository.update(task)
 
-    if task.done:
-        task.mark_undone()
-    else:
-        task.mark_done(today)
+    def toggle_daily(self, task_id: str) -> None:
+        task = self._task_repository.get_by_id(task_id)
+        if not task:
+            return
 
-    if task.id == focus_id:
-        clear_focus()
+        task.toggle_daily()
+        self._task_repository.update(task)
 
-    repos.update(task)
-
-def toggle_daily(task_id: str, repos: TaskRepository) -> None:
-    task = repos.get_by_id(task_id)
-    if not task:
-        return
-
-    task.toggle_daily()
-    repos.update(task)
-
-def delete_task(task_id: str, repos: TaskRepository) -> None:
-    repos.delete(task_id)
+    def delete_task(self, task_id: str) -> None:
+        self._task_repository.delete(task_id)

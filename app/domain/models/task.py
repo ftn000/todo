@@ -19,7 +19,7 @@ class Task:
 
     def mark_done(self, today: date) -> None:
         if self.done:
-            return
+            raise ValueError("Task already completed")
 
         self.done = True
         self.completed_count += 1
@@ -30,10 +30,19 @@ class Task:
     def mark_undone(self) -> None:
         self.done = False
 
+    def toggle_done(self, today: date) -> None:
+        if self.done:
+            self.done = False
+        else:
+            self.mark_done(today)
+
     def toggle_daily(self) -> None:
         self.is_daily = not self.is_daily
         if self.is_daily:
             self.planned_date = None
+        else:
+            self.streak = 0
+            self.last_completed_date = None
 
     def reset_daily(self) -> None:
         if self.is_daily:
