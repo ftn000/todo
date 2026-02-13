@@ -125,3 +125,4 @@ Unit tests for services
 Purpose of the Project
 This project was created to practice backend architecture design, dependency injection, and clean separation between business logic and infrastructure.
 
+[RU version](README.ru.md)
